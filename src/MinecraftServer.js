@@ -18,20 +18,21 @@ class MinecraftServer extends EventEmitter {
     this.options.host = host
     var mc = this.server = mcProtocol.createServer(this.options)
     var store = this.clients
+    var server = this
     if(this.options.favicon) mc.favicon = this.options.favicon
 
     mc.on('login', rawClient => {
-      var client = new MinecraftClient(rawClient, mc)
+      var client = new MinecraftClient(rawClient, server)
       store.forEach(cl => console.log('Connected UUID: %s', cl.uuid))
       console.log('Connecting UUID: %s', client.uuid)
       if(store.find({uuid: client.uuid}).length !== 0) return client.kick({text: 'Your UUID is already registered'})
       client.doLogin()
       store.forEach(cl => {
         cl.sendMessage({color: 'yellow', translate: 'multiplayer.player.joined', 'with': [client.userName]})
-        cl.playerJoined(client)
+        cl.infoPlayerJoined(client)
       })
       store.add(client.id, client)
-      client.playerJoined(store.array)
+      client.infoPlayerJoined(store.array)
       console.log('%s joined the game', client.userName)
       mc.playerCount = store.length
     })
@@ -45,7 +46,8 @@ class MinecraftServer extends EventEmitter {
     })
     store.on('disconnected', (client) => {
       store.forEach(cl => {
-        cl.playerLeft(client)
+        console.log(client.uuid)
+        cl.infoPlayerLeft(client)
         cl.sendMessage({color: 'yellow', translate: 'multiplayer.player.left', 'with': [client.userName]})
       })
       console.log('%s left the game', client.userName)
@@ -54,6 +56,9 @@ class MinecraftServer extends EventEmitter {
   }
   get playerCount() {
     return this.server.playerCount
+  }
+  forEachClient(executor) {
+    this.clients.forEach(cl => executor(cl))
   }
 }
 

@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "dependencies": {
     "debug": "^2.2.0",
-    "minecraft-protocol": "^0.16.3"
+    "minecraft-protocol": "^0.16.4"
   },
   "license": "MIT",
   "author": "Mand",

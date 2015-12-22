@@ -11,7 +11,7 @@ class MinecraftClient extends EventEmitter {
     this.id = rawClient.id
     this.userName = this.displayName = rawClient.username
     this.uuid = rawClient.uuid
-    this.ping = 1
+    this.latency = 1
     this._gameMode = 1
     this.pos = {x: 0, y: 0, z: 0}
 
@@ -34,12 +34,17 @@ class MinecraftClient extends EventEmitter {
       self.pos.y = position.y
       self.pos.z = position.z
     })
+    rawClient.on('keep_alive', () => {
+      self.latency = rawClient.latency
+      self._server.clients.forEach(cl => cl.infoPlayerPing(self))
+      //self.sendMessage({text: 'Ping: ' + rawClient.latency + 'ms', italic: true, color: 'gray'})
+    })
   }
 
   // Public
   doLogin() {
     var client = this._client
-    var server = this._server
+    var server = this._server.server
     client.write('login', {
       entityId: client.id,
       levelType: 'default',
@@ -57,7 +62,6 @@ class MinecraftClient extends EventEmitter {
       pitch: 0,
       flags: 0x00
     })
-    this.pos.y = 60
     this.sendMessage({text: 'Welcome to the Node.JS test server, ' + client.username + '!'})
   }
   get gameMode() {
@@ -76,10 +80,9 @@ class MinecraftClient extends EventEmitter {
     })
   }
   kick(message) {
-    console.log('kicking ', message.text)
     this._client.write('kick_disconnect', {reason: JSON.stringify(message)});
   }
-  playerJoined(clientsJoining) {
+  infoPlayerJoined(clientsJoining) {
     var data = [];
     if(!(clientsJoining instanceof Array)) clientsJoining = [clientsJoining]
     clientsJoining.forEach(cl => data.push({
@@ -95,7 +98,7 @@ class MinecraftClient extends EventEmitter {
       data: data
     })
   }
-  playerLeft(clientsLeaving) {
+  infoPlayerLeft(clientsLeaving) {
     var data = [];
     if(!(clientsLeaving instanceof Array)) clientsLeaving = [clientsLeaving]
     clientsLeaving.forEach(cl => data.push({UUID: cl.uuid}))
@@ -104,7 +107,18 @@ class MinecraftClient extends EventEmitter {
       data: data
     })
   }
-
+  infoPlayerPing(clientsPinging) {
+    var data = [];
+    if(!(clientsPinging instanceof Array)) clientsPinging = [clientsPinging]
+    clientsPinging.forEach(cl => data.push({
+      UUID: cl.uuid,
+      ping: cl.latency
+    }))
+    this._client.write('player_info', {
+      action: 2,
+      data: data
+    })
+  }
   // Test
   sendMessage(message) {
     this._client.write('chat', {message: JSON.stringify(message), position: 0})
