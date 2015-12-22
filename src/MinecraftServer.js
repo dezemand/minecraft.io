@@ -26,39 +26,37 @@ class MinecraftServer extends EventEmitter {
       store.forEach(cl => console.log('Connected UUID: %s', cl.uuid))
       console.log('Connecting UUID: %s', client.uuid)
       if(store.find({uuid: client.uuid}).length !== 0) return client.kick({text: 'Your UUID is already registered'})
-      client.doLogin()
-      store.forEach(cl => {
-        cl.sendMessage({color: 'yellow', translate: 'multiplayer.player.joined', 'with': [client.userName]})
-        cl.infoPlayerJoined(client)
-      })
-      store.add(client.id, client)
-      client.infoPlayerJoined(store.array)
-      console.log('%s joined the game', client.userName)
-      mc.playerCount = store.length
+      client.init()
     })
     store.on('chat', (client, message) => {
       store.forEach(cl => cl.sendMessage({text: '<' + client.userName + '> ' + message.message}))
       console.log('<' + client.userName + '> ' + message.message)
     })
-    store.on('command', (client, command) => {
-      if(command.command == 'gamemode') client.gameMode = command.args
-      else if(command.command == 'explode') client.explosion()
+    store.on('command', (client, cmd) => {
+      if(cmd.name == 'gamemode')
+        client.gameMode = cmd.getArgs(2)[0]
+      else if(cmd.name == 'latency')
+        client.sendMessage({text: 'Latency: ' + client.latency + 'ms'})
+      else
+        client.sendMessage({text: 'Command not found', italic: true, color: 'gray'})
     })
     store.on('disconnected', (client) => {
       store.forEach(cl => {
-        console.log(client.uuid)
         cl.infoPlayerLeft(client)
         cl.sendMessage({color: 'yellow', translate: 'multiplayer.player.left', 'with': [client.userName]})
       })
       console.log('%s left the game', client.userName)
-      mc.playerCount = store.length
+      server.updatePlayerCount()
     })
+    store.on('initiated', (client) => {
+      client.sendMessage({text: 'Welcome, ' + client.userName + '!'})
+    })
+  }
+  updatePlayerCount() {
+    this.server.playerCount = this.clients.length
   }
   get playerCount() {
     return this.server.playerCount
-  }
-  forEachClient(executor) {
-    this.clients.forEach(cl => executor(cl))
   }
 }
 

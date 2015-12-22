@@ -1,5 +1,6 @@
 "use strict"
 const EventEmitter = require('events').EventEmitter
+const MinecraftChatCommand = require('./MinecraftChatCommand')
 
 class MinecraftClient extends EventEmitter {
   // Private
@@ -8,22 +9,24 @@ class MinecraftClient extends EventEmitter {
     var self = this
     this._client = rawClient
     this._server = server
+    this._store = server.clients
+    this._init = false
+    this.others = server.clients.others(this)
+    this.all = server.clients.forEach
     this.id = rawClient.id
     this.userName = this.displayName = rawClient.username
     this.uuid = rawClient.uuid
     this.latency = 1
+    this.health = 20
+    this.food = 20
     this._gameMode = 1
     this.pos = {x: 0, y: 0, z: 0}
 
     rawClient.on('chat', chatMessage => {
-      if(chatMessage.message.startsWith('/')) {
-        var command = {
-          command: chatMessage.message.split(' ')[0].split('/')[1],
-          args: (chatMessage.message.indexOf(' ') !== -1) ? chatMessage.message.replace(chatMessage.message.split(' ')[0] + ' ', '') : '',
-          raw: chatMessage.message
-        }
-        self.emit('command', command)
-      } else self.emit('chat', chatMessage)
+      if(chatMessage.message.startsWith('/'))
+        self.emit('command', new MinecraftChatCommand(chatMessage.message))
+      else
+        self.emit('chat', chatMessage)
     })
     rawClient.on('end', () => {
       self.emit('disconnected')
@@ -36,40 +39,47 @@ class MinecraftClient extends EventEmitter {
     })
     rawClient.on('keep_alive', () => {
       self.latency = rawClient.latency
-      self._server.clients.forEach(cl => cl.infoPlayerPing(self))
-      //self.sendMessage({text: 'Ping: ' + rawClient.latency + 'ms', italic: true, color: 'gray'})
+      self.all(cl => cl.infoPlayerPing(self))
     })
   }
 
   // Public
-  doLogin() {
-    var client = this._client
-    var server = this._server.server
-    client.write('login', {
-      entityId: client.id,
+  init() {
+    var self = this
+    if(self._init) throw new Error('cannot init twice')
+    self._store.add(self.id, self)
+    self.send('login', {
+      entityId: self._client.id,
       levelType: 'default',
-      gameMode: 1,
+      gameMode: self.gameMode,
       dimension: 0,
       difficulty: 2,
-      maxPlayers: server.maxPlayers,
+      maxPlayers: self._server.server.maxPlayers,
       reducedDebugInfo: false
     })
-    client.write('position', {
-      x: 0,
-      z: 0,
-      y: 60,
+    self.send('position', {
+      x: this.pos.x,
+      y: this.pos.y,
+      z: this.pos.z,
       yaw: 0,
       pitch: 0,
       flags: 0x00
     })
-    this.sendMessage({text: 'Welcome to the Node.JS test server, ' + client.username + '!'})
+    self.others(cl => {
+      cl.sendMessage({color: 'yellow', translate: 'multiplayer.player.joined', 'with': [self.userName]})
+      cl.infoPlayerJoined(self)
+    })
+    self.infoPlayerJoined(self._store.array)
+    self._server.updatePlayerCount()
+    self._init = true
+    self.emit('initiated')
   }
   get gameMode() {
     return this._gameMode
   }
   set gameMode(gameModeId) {
     this._gameMode = gameModeId
-    this._client.write('game_state_change', {
+    this.send('game_state_change', {
       reason: 3,
       gameMode: gameModeId
     })
@@ -80,7 +90,7 @@ class MinecraftClient extends EventEmitter {
     })
   }
   kick(message) {
-    this._client.write('kick_disconnect', {reason: JSON.stringify(message)});
+    this.send('kick_disconnect', {reason: JSON.stringify(message)});
   }
   infoPlayerJoined(clientsJoining) {
     var data = [];
@@ -93,7 +103,7 @@ class MinecraftClient extends EventEmitter {
       ping: cl.ping,
       displayName: cl.displayName
     }))
-    this._client.write('player_info', {
+    this.send('player_info', {
       action: 0,
       data: data
     })
@@ -102,7 +112,7 @@ class MinecraftClient extends EventEmitter {
     var data = [];
     if(!(clientsLeaving instanceof Array)) clientsLeaving = [clientsLeaving]
     clientsLeaving.forEach(cl => data.push({UUID: cl.uuid}))
-    this._client.write('player_info', {
+    this.send('player_info', {
       action: 0,
       data: data
     })
@@ -114,26 +124,18 @@ class MinecraftClient extends EventEmitter {
       UUID: cl.uuid,
       ping: cl.latency
     }))
-    this._client.write('player_info', {
+    this.send('player_info', {
       action: 2,
       data: data
     })
   }
+  send(packetName, packetInfo) {
+    return this._client.write(packetName, packetInfo)
+  }
+
   // Test
   sendMessage(message) {
-    this._client.write('chat', {message: JSON.stringify(message), position: 0})
-  }
-  explosion() {
-    var pos = this.pos
-    this._client.write('explosion', {
-      x: pos.x,
-      y: pos.y,
-      z: pos.z,
-      affectedBlockOffsets: [],
-      playerMotionX: 0,
-      playerMotionY: 0,
-      playerMotionZ: 0
-    })
+    this.send('chat', {message: JSON.stringify(message), position: 0})
   }
 }
 

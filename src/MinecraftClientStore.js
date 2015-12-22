@@ -12,6 +12,8 @@ class MinecraftClientStore {
       list.forEach((client, key) => {if(client.id !== query.id) list.splice(key, 1)})
     if(query.uuid !== undefined)
       list.forEach((client, key) => {if(client.uuid !== query.uuid) list.splice(key, 1)})
+    if(query.userName !== undefined)
+      list.forEach((client, key) => {if(client.userName !== query.userName) list.splice(key, 1)})
     return list
   }
   add(id, client) {
@@ -41,6 +43,16 @@ class MinecraftClientStore {
     for(var k in this._clients) {
       if(!this._clients.hasOwnProperty(k)) continue;
       callback(this._clients[k])
+    }
+  }
+  others(client) {
+    var clients = this._clients
+    return callback => {
+      for(var k in clients) {
+        if(!clients.hasOwnProperty(k)) continue;
+        if(clients[k].uuid == client.uuid) continue;
+        callback(clients[k])
+      }
     }
   }
 
