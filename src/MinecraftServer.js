@@ -35,7 +35,7 @@ class MinecraftServer extends EventEmitter {
     })
     store.on('command', (client, cmd) => {
       if(cmd.name == 'gamemode')
-        client.gameMode = cmd.getArgs(2)[0]
+        client.gameMode = parseInt(cmd.getArgs(2)[0])
       else if(cmd.name == 'latency')
         client.sendMessage({text: 'Latency: ' + client.latency + 'ms'})
       else if(cmd.name == 'heal')

@@ -107,15 +107,15 @@ class MinecraftClient extends EventEmitter {
       reason: 3,
       gameMode: gameModeId
     })
-    this.sendAbilities()
     this.all(cl => cl.infoPlayerGamemode(self))
+    this.sendAbilities()
     this.emit('gameModeChange', gameModeId, oldGameMode)
   }
   get flags() {
     var creative = +(this.gameMode === 1)
-    var isFlying = 0
+    var isFlying = 0 // TODO
     var canFly = +(this.gameMode === 1 || this.gameMode === 3)
-    var godmode = 0
+    var godmode = 0 // TODO, but low priority
     return creative + isFlying * 2 + canFly * 4 + godmode * 8
   }
   kick(message) {
