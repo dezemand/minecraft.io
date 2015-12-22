@@ -11,6 +11,7 @@ class MinecraftServer extends EventEmitter {
     this.server = null
     this.clients = new MinecraftClientStore()
     this.options = options
+    this.startTime = new Date()
   }
   listen(port = 25565, host = '0.0.0.0', callback = () => {}) {
     if(this.server !== null) throw new Error('server already running')
@@ -37,6 +38,8 @@ class MinecraftServer extends EventEmitter {
         client.gameMode = cmd.getArgs(2)[0]
       else if(cmd.name == 'latency')
         client.sendMessage({text: 'Latency: ' + client.latency + 'ms'})
+      else if(cmd.name == 'heal')
+        client.updateHealth(20, 20)
       else
         client.sendMessage({text: 'Command not found', italic: true, color: 'gray'})
     })
@@ -50,6 +53,13 @@ class MinecraftServer extends EventEmitter {
     })
     store.on('initiated', (client) => {
       client.sendMessage({text: 'Welcome, ' + client.userName + '!'})
+    })
+    store.on('gameModeChange', client => {
+      client.sendMessage({
+        text: 'Your gamemode has been changed',
+        italic: true,
+        color: 'gray'
+      })
     })
   }
   updatePlayerCount() {

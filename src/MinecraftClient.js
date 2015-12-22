@@ -1,6 +1,7 @@
 "use strict"
 const EventEmitter = require('events').EventEmitter
 const MinecraftChatCommand = require('./MinecraftChatCommand')
+const Vec3 = require('vec3')
 
 class MinecraftClient extends EventEmitter {
   // Private
@@ -17,10 +18,12 @@ class MinecraftClient extends EventEmitter {
     this.userName = this.displayName = rawClient.username
     this.uuid = rawClient.uuid
     this.latency = 1
-    this.health = 20
-    this.food = 20
-    this._gameMode = 1
+    this.health = 1
+    this.food = 0
+    this._gameMode = 0
     this.pos = {x: 0, y: 0, z: 0}
+    this.look = {yaw: 0, pitch: 0}
+    this.onGround = false
 
     rawClient.on('chat', chatMessage => {
       if(chatMessage.message.startsWith('/'))
@@ -32,10 +35,22 @@ class MinecraftClient extends EventEmitter {
       self.emit('disconnected')
     })
     rawClient.on('error', err => console.log(err, err.stack))
-    rawClient.on('position', (position) => {
+    rawClient.on('position', position => {
       self.pos.x = position.x
       self.pos.y = position.y
       self.pos.z = position.z
+      self.onGround = position.onGround
+    })
+    rawClient.on('look', look => {
+      self.look.pitch = look.pitch
+      self.look.yaw = look.yaw
+      self.onGround = look.onGround
+    })
+    rawClient.on('position_look', lookpos => {
+      var look = {yaw: lookpos.yaw, pitch: lookpos.pitch, onGround: lookpos.onGround}
+      var pos = {x: lookpos.x, y: lookpos.y, z: lookpos.z, onGround: lookpos.onGround}
+      rawClient.emit('look', look)
+      rawClient.emit('position', pos)
     })
     rawClient.on('keep_alive', () => {
       self.latency = rawClient.latency
@@ -58,16 +73,23 @@ class MinecraftClient extends EventEmitter {
       reducedDebugInfo: false
     })
     self.send('position', {
-      x: this.pos.x,
-      y: this.pos.y,
-      z: this.pos.z,
-      yaw: 0,
-      pitch: 0,
-      flags: 0x00
+      x: self.pos.x,
+      y: self.pos.y,
+      z: self.pos.z,
+      yaw: self.look.yaw,
+      pitch: self.look.pitch,
+      flags: self.flags
     })
+    self.send('spawn_position', {
+      location: '0.0.0'
+    })
+    self.updateHealth()
+    self.updateTime()
+    self.sendAbilities()
     self.others(cl => {
       cl.sendMessage({color: 'yellow', translate: 'multiplayer.player.joined', 'with': [self.userName]})
       cl.infoPlayerJoined(self)
+      cl.updateTime()
     })
     self.infoPlayerJoined(self._store.array)
     self._server.updatePlayerCount()
@@ -78,16 +100,23 @@ class MinecraftClient extends EventEmitter {
     return this._gameMode
   }
   set gameMode(gameModeId) {
+    var self = this
+    var oldGameMode = this._gameMode
     this._gameMode = gameModeId
     this.send('game_state_change', {
       reason: 3,
       gameMode: gameModeId
     })
-    this.sendMessage({
-      text: 'Your gamemode has been changed',
-      italic: true,
-      color: 'gray'
-    })
+    this.sendAbilities()
+    this.all(cl => cl.infoPlayerGamemode(self))
+    this.emit('gameModeChange', gameModeId, oldGameMode)
+  }
+  get flags() {
+    var creative = +(this.gameMode === 1)
+    var isFlying = 0
+    var canFly = +(this.gameMode === 1 || this.gameMode === 3)
+    var godmode = 0
+    return creative + isFlying * 2 + canFly * 4 + godmode * 8
   }
   kick(message) {
     this.send('kick_disconnect', {reason: JSON.stringify(message)});
@@ -129,11 +158,45 @@ class MinecraftClient extends EventEmitter {
       data: data
     })
   }
+  infoPlayerGamemode(clientsChanging) {
+    var data = [];
+    if(!(clientsChanging instanceof Array)) clientsChanging = [clientsChanging]
+    clientsChanging.forEach(cl => data.push({
+      UUID: cl.uuid,
+      gamemode: cl.gameMode
+    }))
+    this.send('player_info', {
+      action: 1,
+      data: data
+    })
+  }
+  updateHealth(health = this.health, food = this.food, foodSaturation = 0) {
+    this.send('update_health', {
+      health: health,
+      food: food,
+      foodSaturation: foodSaturation
+    })
+    this.health = health
+    this.food = food
+  }
+  updateTime() {
+    var time = (new Date()) - this._server.startTime
+    var ticks = Math.round(time / 50) % 24000
+    this.send('update_time', {
+      age: [0, 0],
+      time: [0, ticks]
+    })
+  }
+  sendAbilities() {
+    this.send('abilities', {
+      flags: this.flags,
+      flyingSpeed: 0.1,
+      walkingSpeed: 0.2
+    })
+  }
   send(packetName, packetInfo) {
     return this._client.write(packetName, packetInfo)
   }
-
-  // Test
   sendMessage(message) {
     this.send('chat', {message: JSON.stringify(message), position: 0})
   }
