@@ -38,17 +38,29 @@ class MinecraftClient extends EventEmitter {
     })
     rawClient.on('error', err => console.log(err, err.stack))
     rawClient.on('position', data => {
+      if(self.onGround != data.onGround) self.emit('onGround', data.onGround)
+      self.emit('position', {
+        x: data.x, dx: data.x - self.pos.x,
+        y: data.y, dy: data.y - self.pos.y,
+        z: data.z, dz: data.z - self.pos.z
+      })
       self.pos.x = data.x
       self.pos.y = data.y
       self.pos.z = data.z
       self.onGround = data.onGround
     })
     rawClient.on('look', data => {
+      if(self.onGround != data.onGround) self.emit('onGround', data.onGround)
+      self.emit('look', {
+        yaw: data.yaw, dyaw: data.yaw - self.look.yaw,
+        pitch: data.pitch, dpitch: data.pitch - self.look.pitch
+      })
       self.look.pitch = data.pitch
       self.look.yaw = data.yaw
       self.onGround = data.onGround
     })
     rawClient.on('position_look', data => {
+      if(self.onGround != data.onGround) self.emit('onGround', data.onGround)
       var look = {yaw: data.yaw, pitch: data.pitch, onGround: data.onGround}
       var pos = {x: data.x, y: data.y, z: data.z, onGround: data.onGround}
       rawClient.emit('look', look)
@@ -63,7 +75,7 @@ class MinecraftClient extends EventEmitter {
   // Public
   init() {
     var self = this
-    if(self._init) throw new Error('cannot init twice')
+    if(self._init) throw new Error('Cannot `init` MinecraftClient twice')
     self._store.add(self.id, self)
     self.send('login', {
       entityId: self._client.id,
