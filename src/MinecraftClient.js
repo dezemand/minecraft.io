@@ -13,7 +13,7 @@ class MinecraftClient extends EventEmitter {
     this._store = server.clients
     this._init = false
     this.others = server.clients.others(this)
-    this.all = server.clients.forEach
+    this.all = server.clients.all
     this.id = rawClient.id
     this.userName = this.displayName = rawClient.username
     this.uuid = rawClient.uuid
@@ -25,30 +25,30 @@ class MinecraftClient extends EventEmitter {
     this.look = {yaw: 0, pitch: 0}
     this.onGround = false
 
-    rawClient.on('chat', chatMessage => {
-      if(chatMessage.message.startsWith('/'))
-        self.emit('command', new MinecraftChatCommand(chatMessage.message))
+    rawClient.on('chat', data => {
+      if(data.message.startsWith('/'))
+        self.emit('command', new MinecraftChatCommand(data.message))
       else
-        self.emit('chat', chatMessage)
+        self.emit('chat', data)
     })
     rawClient.on('end', () => {
       self.emit('disconnected')
     })
     rawClient.on('error', err => console.log(err, err.stack))
-    rawClient.on('position', position => {
-      self.pos.x = position.x
-      self.pos.y = position.y
-      self.pos.z = position.z
-      self.onGround = position.onGround
+    rawClient.on('position', data => {
+      self.pos.x = data.x
+      self.pos.y = data.y
+      self.pos.z = data.z
+      self.onGround = data.onGround
     })
-    rawClient.on('look', look => {
-      self.look.pitch = look.pitch
-      self.look.yaw = look.yaw
-      self.onGround = look.onGround
+    rawClient.on('look', data => {
+      self.look.pitch = data.pitch
+      self.look.yaw = data.yaw
+      self.onGround = data.onGround
     })
-    rawClient.on('position_look', lookpos => {
-      var look = {yaw: lookpos.yaw, pitch: lookpos.pitch, onGround: lookpos.onGround}
-      var pos = {x: lookpos.x, y: lookpos.y, z: lookpos.z, onGround: lookpos.onGround}
+    rawClient.on('position_look', data => {
+      var look = {yaw: data.yaw, pitch: data.pitch, onGround: data.onGround}
+      var pos = {x: data.x, y: data.y, z: data.z, onGround: data.onGround}
       rawClient.emit('look', look)
       rawClient.emit('position', pos)
     })
