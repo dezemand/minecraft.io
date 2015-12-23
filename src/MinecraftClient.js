@@ -1,6 +1,7 @@
 "use strict"
 const EventEmitter = require('events').EventEmitter
 const MinecraftChatCommand = require('./MinecraftChatCommand')
+const MinecraftEntityPlayer = require('./MinecraftEntityPlayer')
 const Vec3 = require('vec3')
 
 class MinecraftClient extends EventEmitter {
@@ -24,6 +25,7 @@ class MinecraftClient extends EventEmitter {
     this.pos = {x: 0, y: 0, z: 0}
     this.look = {yaw: 0, pitch: 0}
     this.onGround = false
+    this.entity = null
 
     rawClient.on('chat', data => {
       if(data.message.startsWith('/'))
@@ -72,14 +74,7 @@ class MinecraftClient extends EventEmitter {
       maxPlayers: self._server.server.maxPlayers,
       reducedDebugInfo: false
     })
-    self.send('position', {
-      x: self.pos.x,
-      y: self.pos.y,
-      z: self.pos.z,
-      yaw: self.look.yaw,
-      pitch: self.look.pitch,
-      flags: self.flags
-    })
+    self.sendPosition()
     self.send('spawn_position', {
       location: '0.0.0'
     })
@@ -92,6 +87,7 @@ class MinecraftClient extends EventEmitter {
       cl.updateTime()
     })
     self.infoPlayerJoined(self._store.array)
+    self.entity = new MinecraftEntityPlayer(self)
     self._server.updatePlayerCount()
     self._init = true
     self.emit('initiated')
@@ -192,6 +188,16 @@ class MinecraftClient extends EventEmitter {
       flags: this.flags,
       flyingSpeed: 0.1,
       walkingSpeed: 0.2
+    })
+  }
+  sendPosition() {
+    this.send('position', {
+      x: this.pos.x,
+      y: this.pos.y,
+      z: this.pos.z,
+      yaw: this.look.yaw,
+      pitch: this.look.pitch,
+      flags: this.flags
     })
   }
   send(packetName, packetInfo) {
