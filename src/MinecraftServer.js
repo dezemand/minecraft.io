@@ -24,13 +24,13 @@ class MinecraftServer extends EventEmitter {
 
     mc.on('login', rawClient => {
       var client = new MinecraftClient(rawClient, server)
-      store.forEach(cl => console.log('Connected UUID: %s', cl.uuid))
+      store.all(cl => console.log('Connected UUID: %s', cl.uuid))
       console.log('Connecting UUID: %s', client.uuid)
       if(store.find({uuid: client.uuid}).length !== 0) return client.kick({text: 'Your UUID is already registered'})
       client.init()
     })
     store.on('chat', (client, message) => {
-      store.forEach(cl => cl.sendMessage({text: '<' + client.userName + '> ' + message.message}))
+      store.all(cl => cl.sendMessage({text: '<' + client.userName + '> ' + message.message}))
       console.log('<' + client.userName + '> ' + message.message)
     })
     store.on('command', (client, cmd) => {
@@ -44,7 +44,7 @@ class MinecraftServer extends EventEmitter {
         client.sendMessage({text: 'Command not found', italic: true, color: 'gray'})
     })
     store.on('disconnected', (client) => {
-      store.forEach(cl => {
+      store.all(cl => {
         cl.infoPlayerLeft(client)
         cl.sendMessage({color: 'yellow', translate: 'multiplayer.player.left', 'with': [client.userName]})
       })
