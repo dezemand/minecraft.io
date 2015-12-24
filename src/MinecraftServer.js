@@ -4,26 +4,33 @@ const debug = require('debug')('mc:server')
 const mcProtocol = require('minecraft-protocol')
 const MinecraftClient = require('./MinecraftClient')
 const MinecraftClientStore = require('./MinecraftClientStore')
+const MinecraftEntityStore = require('./MinecraftEntityStore')
+const NanoTimer = require('nanotimer')
 
 class MinecraftServer extends EventEmitter {
   constructor(options) {
     super()
     this.server = null
     this.clients = new MinecraftClientStore()
+    this.entities = new MinecraftEntityStore()
     this.options = options
     this.startTime = new Date()
+    this.timer = new NanoTimer()
+    this.tickInterval = 1000 / 20
   }
   listen(port = 25565, host = '0.0.0.0', callback = () => {}) {
-    if(this.server !== null) throw new Error('server already running')
+    if(this.server !== null) throw new Error('Cannot `listen` MinecraftServer twice')
     this.options.port = port
     this.options.host = host
-    var mc = this.server = mcProtocol.createServer(this.options)
+    this.server = mcProtocol.createServer(this.options)
+    this._initEvents()
+    this.timer.setInterval(this.tick, [this], this.tickInterval + 'u')
+  }
+  _initEvents() {
+    var self = this
     var store = this.clients
-    var server = this
-    if(this.options.favicon) mc.favicon = this.options.favicon
-
-    mc.on('login', rawClient => {
-      var client = new MinecraftClient(rawClient, server)
+    self.server.on('login', rawClient => {
+      var client = new MinecraftClient(rawClient, self)
       store.all(cl => console.log('Connected UUID: %s', cl.uuid))
       console.log('Connecting UUID: %s', client.uuid)
       if(store.find({uuid: client.uuid}).length !== 0) return client.kick({text: 'Your UUID is already registered'})
@@ -49,7 +56,7 @@ class MinecraftServer extends EventEmitter {
         cl.sendMessage({color: 'yellow', translate: 'multiplayer.player.left', 'with': [client.userName]})
       })
       console.log('%s left the game', client.userName)
-      server.updatePlayerCount()
+      self.updatePlayerCount()
     })
     store.on('initiated', (client) => {
       client.sendMessage({text: 'Welcome, ' + client.userName + '!'})
@@ -65,8 +72,9 @@ class MinecraftServer extends EventEmitter {
   updatePlayerCount() {
     this.server.playerCount = this.clients.length
   }
-  get playerCount() {
-    return this.server.playerCount
+  tick(self) {
+    self.clients.all(client => client.tick())
+    self.entities.all(entity => entity.tick())
   }
 }
 

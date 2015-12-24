@@ -10,14 +10,15 @@ class MinecraftEntityPlayer extends MinecraftEntity {
       self.pos.x = pos.x
       self.pos.y = pos.y
       self.pos.z = pos.z
-      self.clientsInRange.forEach(cl => self.sendPosition(cl, pos))
+      if(self._init) self.clientsInRange.forEach(cl => self.sendPosition(cl, pos))
     })
     client.on('look', look => {
       self.look.yaw = look.yaw
       self.look.pitch = look.pitch
-      self.clientsInRange.forEach(cl => self.sendLook(cl))
+      if(self._init) self.clientsInRange.forEach(cl => self.sendLook(cl))
     })
   }
+
   spawn(cl) {
     cl.send('named_entity_spawn', {
       entityId: this.id,

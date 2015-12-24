@@ -15,6 +15,7 @@ class MinecraftEntity extends EventEmitter {
     this.id = id
     this.clientsInRange = []
     this.clients.inRange(pos, 10 * 16, cl => self.clientsInRange.push(cl))
+    this._server.entities.add(this)
   }
   init() {
     if(this._init) throw new Error('Cannot `init` MinecraftEntity twice')
