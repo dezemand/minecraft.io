@@ -1,10 +1,9 @@
 "use strict"
-var MinecraftServer = require('./src/MinecraftServer')
-var fs = require('fs')
+const MinecraftServer = require('./dist/Minecraft/Server').default
 
-var server = new MinecraftServer({
+const server = new MinecraftServer({
   motd: 'A Javascript server!',
-  favicon: fs.readFileSync('./nodejs.png').toString('base64')
+  version: '1.12'
 })
 
 server.listen(25565)
