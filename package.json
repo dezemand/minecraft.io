@@ -1,0 +1,13 @@
+{
+  "name": "minecraft.io",
+  "version": "0.0.1",
+  "dependencies": {
+    "debug": "^2.2.0",
+    "minecraft-protocol": "^0.16.4",
+    "nanotimer": "^0.3.13",
+    "vec3": "^0.1.3"
+  },
+  "license": "MIT",
+  "author": "Mand",
+  "description": "A minecraft server written in javascript using node-minecraft-protocol"
+}
