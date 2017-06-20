@@ -1,11 +1,12 @@
 "use strict"
+import {Event} from './Enums'
 
 export default class EventEmitter {
-  private EEEvents: Map<string, Set<any>> = new Map()
+  private EEEvents: Map<Event, Set<any>> = new Map()
   private EEOnceEvents: Set<any> = new Set()
   public EEMaxListeners: number = 20
 
-  public on(event: string, callback) {
+  public on (event: Event, callback) {
     if(!this.EEEvents.has(event))
       this.EEEvents.set(event, new Set())
     if(this.EEEvents.get(event).size > this.EEMaxListeners)
@@ -13,12 +14,12 @@ export default class EventEmitter {
     this.EEEvents.get(event).add(callback)
   }
 
-  public once(event: string, callback) {
+  public once (event: Event, callback) {
     this.EEOnceEvents.add(callback)
     this.on(event, callback)
   }
 
-  public emit(event: string, ...data) {
+  public emit (event: Event, ...data) {
     if(!this.EEEvents.has(event))
       return
     for(let callback of this.EEEvents.get(event)) {
@@ -30,7 +31,7 @@ export default class EventEmitter {
     }
   }
 
-  public removeListener(event: string, callback) {
+  public removeListener (event: Event, callback) {
     if(!this.EEEvents.has(event))
       return
     this.EEEvents.get(event).delete(callback)

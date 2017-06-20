@@ -1,10 +1,11 @@
 "use strict"
+import {Event} from '../../Enums'
 
 export default class MinecraftStore {
-  stored: Map<string, any> = new Map()
-  events: Map<string, Set<any>> = new Map()
+  stored: Map<number | string, any> = new Map()
+  events: Map<Event, Set<any>> = new Map()
 
-  add(id: any, item: any): boolean {
+  add (id: number | string, item: any): boolean {
     if(this.stored.has(id))
       return false
     this.stored.set(id, item)
@@ -27,7 +28,7 @@ export default class MinecraftStore {
     return this.stored.size
   }
 
-  on(event: string, callback: any) {
+  on (event: Event, callback: any) {
     if(!this.events.has(event))
       this.events.set(event, new Set())
     this.events.get(event).add(callback)
