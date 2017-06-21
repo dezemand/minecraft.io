@@ -27,11 +27,11 @@ export default class MinecraftChunk {
     this.addSkyLight()
   }
 
-  public get data (): ArrayBuffer {
+  public get data (): Buffer {
     return this.chunk.dump()
   }
 
-  public get id () {
+  public get id (): string {
     return this.pos.x + ',' + this.pos.z
   }
 

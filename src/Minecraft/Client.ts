@@ -10,7 +10,6 @@ import MinecraftWorld from './World'
 import {Event} from '../Enums'
 import MinecraftChunk from './Chunk'
 import * as SpiralLoop from 'spiralloop'
-declare const Buffer
 
 const debug: Debug = new Debug('MinecraftClient')
 
