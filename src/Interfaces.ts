@@ -1,6 +1,6 @@
 "use strict"
-import {WorldType} from './Enums'
-import MinecraftWorld from './Minecraft/World'
+import {BlockDigStatus, BlockFace, Event, HotbarButton, MouseButton, WindowClickMode, WorldType} from './Enums'
+import MinecraftWorld from './Minecraft/World/World'
 import MinecraftServer from './Minecraft/Server'
 
 export interface WorldOptions {
@@ -67,4 +67,30 @@ export interface Chat {
 export interface ChunkPosition {
   x: number,
   z: number
+}
+
+export interface BlockDigData {
+  status: BlockDigStatus,
+  location: Position,
+  face: BlockFace
+}
+
+export interface Listener {
+  on: (event: string | Event, callback: (any) => any) => void
+}
+
+export interface SlotData {
+  blockId: number,
+  itemCount?: number,
+  itemDamage?: number,
+  nbtData?: any
+}
+
+export interface WindowClickData {
+  windowId: number,
+  slot: number,
+  mouseButton: MouseButton | HotbarButton,
+  action: WindowClickMode,
+  mode: number,
+  item: SlotData
 }

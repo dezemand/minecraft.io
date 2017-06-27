@@ -1,6 +1,6 @@
 "use strict"
 import MinecraftStore from './Store'
-import MinecraftWorld from '../World'
+import MinecraftWorld from '../World/World'
 
 export default class MinecraftWorldStore extends MinecraftStore {
   addWorld (world: MinecraftWorld, isDefault: boolean = false): boolean {

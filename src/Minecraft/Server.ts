@@ -7,9 +7,11 @@ import MinecraftClientStore from './Store/Client'
 import MinecraftEntityStore from './Store/Entity'
 import Debug from '../Debug'
 import MinecraftWorldStore from './Store/World'
-import MinecraftWorld from './World'
+import MinecraftWorld from './World/World'
 import {WorldOptions} from '../Interfaces'
 import {Event} from '../Enums'
+import MinecraftFileSystem from './FileSystem'
+import * as path from 'path'
 
 const debug: Debug = new Debug('MinecraftServer')
 
@@ -17,10 +19,12 @@ export default class MinecraftServer extends Events {
   public clients: MinecraftClientStore = new MinecraftClientStore()
   public entities: MinecraftEntityStore = new MinecraftEntityStore()
   public worlds: MinecraftWorldStore = new MinecraftWorldStore()
+  public fs: MinecraftFileSystem = new MinecraftFileSystem(this)
   private server: Server = null
   public startTime: Date = new Date()
   private timer: NanoTimer = new NanoTimer()
   readonly tickInterval = 1000 / 20
+  readonly dataDir = path.join(process.cwd(), 'data')
 
   constructor (public options) {
     super()

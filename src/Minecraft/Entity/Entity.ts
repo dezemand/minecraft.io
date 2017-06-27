@@ -2,7 +2,7 @@
 import Events from '../../EventEmitter'
 import MinecraftClient from '../Client'
 import MinecraftServer from '../Server'
-import MinecraftWorld from '../World'
+import MinecraftWorld from '../World/World'
 import {Look, Position} from '../../Interfaces'
 
 export default class MinecraftEntity extends Events {

@@ -1,15 +1,16 @@
 "use strict"
-import {WorldOptions} from '../Interfaces'
-import MinecraftWorldStore from './Store/World'
-import {WorldType} from '../Enums'
-import MinecraftServer from './Server'
-import MinecraftClient from './Client'
-import MinecraftEntity from './Entity/Entity'
-import Debug from '../Debug'
+import {Position, WorldOptions} from '../../Interfaces'
+import MinecraftWorldStore from '../Store/World'
+import {WorldType} from '../../Enums'
+import MinecraftServer from '../Server'
+import MinecraftClient from '../Client'
+import MinecraftEntity from '../Entity/Entity'
+import Debug from '../../Debug'
 import MinecraftChunk from './Chunk'
 
 const debug = new Debug('MinecraftWorld')
 
+// TODO: Loading from MinecraftFileSystem, instead of using TEMPCreateChunks
 export default class MinecraftWorld {
   public id: number
   public type: WorldType
@@ -53,5 +54,11 @@ export default class MinecraftWorld {
     if (!this.chunks.has(id))
       throw new Error('Cannot access chunk, not stored')
     return this.chunks.get(id)
+  }
+
+  public getChunkByPosition (pos: Position): MinecraftChunk {
+    const x: number = Math.floor(pos.x / 16 / 32)
+    const z: number = Math.floor(pos.z / 16 / 32)
+    return this.getChunk(x, z)
   }
 }

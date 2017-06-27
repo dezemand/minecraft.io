@@ -6,10 +6,15 @@ import MinecraftEntity from './Entity/Entity'
 import MinecraftEntityPlayer from './Entity/Player'
 import {Chat, Look, Position} from '../Interfaces'
 import Debug from '../Debug'
-import MinecraftWorld from './World'
+import MinecraftWorld from './World/World'
 import {Event} from '../Enums'
-import MinecraftChunk from './Chunk'
+import MinecraftChunk from './World/Chunk'
 import * as SpiralLoop from 'spiralloop'
+import MinecraftWorldInteractor from './World/Interactor'
+import MinecraftItemStack from './Item/ItemStack'
+import MinecraftInventoryPlayer from './Inventory/Player'
+import MinecraftItem from './Item/Item'
+import MinecraftInventory from './Inventory/Inventory'
 
 const debug: Debug = new Debug('MinecraftClient')
 
@@ -25,6 +30,8 @@ export default class MinecraftClient extends EventEmitter {
   private entity: MinecraftEntityPlayer
   private spawnedEntities: Set<MinecraftEntity> = new Set()
   private loadedChunks: Set<MinecraftChunk> = new Set()
+  private worldInteractor: MinecraftWorldInteractor = new MinecraftWorldInteractor(this)
+  public inventory: MinecraftInventoryPlayer = new MinecraftInventoryPlayer(this)
 
   constructor (public rawClient, public server: MinecraftServer) {
     super()
@@ -47,8 +54,11 @@ export default class MinecraftClient extends EventEmitter {
     this.rawClient.on('look', this.updateLook.bind(this))
     this.rawClient.on('position_look', this.updatePosLook.bind(this))
     this.rawClient.on('keep_alive', this.keepAlive.bind(this))
+    this.worldInteractor.listen()
+    this.inventory.listen()
   }
 
+  // TODO: Check out wiki.vg's Protocol FAQ for a better sequence
   public init (): void {
     if (this.inited)
       throw new Error('Cannot init twice')
@@ -82,6 +92,7 @@ export default class MinecraftClient extends EventEmitter {
     this.entity.init()
     this.server.updatePlayerCount()
     this.updateSpawnedEntites()
+    this.inventory.sendFullInventory()
     this.emit(Event.ClientInitiated)
   }
 
@@ -197,9 +208,9 @@ export default class MinecraftClient extends EventEmitter {
 
   public get flags (): number {
     const creative = +(this.gameMode === 1)
-    const isFlying = 0 // TODO
+    const isFlying = 0 // TODO: Should be loaded from player profile after logging in
     const canFly = +(this.gameMode === 1 || this.gameMode === 3)
-    const godmode = 0
+    const godmode = 0 // Not sure...
     return creative + isFlying * 2 + canFly * 4 + godmode * 8
   }
 
@@ -341,6 +352,7 @@ export default class MinecraftClient extends EventEmitter {
       })
   }
 
+  // TODO: Better spiralling, spiralloop sucks
   private get chunkSpiral (): Array<Array<number>> {
     const viewDistance = 2
     const centerX: number = Math.floor(this.pos.x / 16 / 32)
@@ -356,5 +368,14 @@ export default class MinecraftClient extends EventEmitter {
     this.chunkSpiral
       .map((pos: Array<number>) => this.world.getChunk(pos[0], pos[1]))
       .forEach((chunk: MinecraftChunk) => this.sendChunk(chunk))
+  }
+
+  // TODO: Create inventory loader using MinecraftFileSystem
+  public loadInventory (): MinecraftInventory {
+    const inventory: MinecraftInventory = new MinecraftInventory()
+    inventory.setSlot(0, new MinecraftItemStack(new MinecraftItem(57), 64))
+    for (let i = 1; i < 37; i++)
+      inventory.setSlot(i, new MinecraftItemStack(new MinecraftItem(i), i))
+    return inventory
   }
 }

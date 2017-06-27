@@ -1,7 +1,7 @@
 "use strict"
 import * as MinecraftData from 'minecraft-data'
 import MinecraftBiome from './Biome'
-import {Position} from '../Interfaces'
+import {Position} from '../../Interfaces'
 const mcData = MinecraftData('1.12')
 
 export default class MinecraftBlock {
@@ -9,7 +9,7 @@ export default class MinecraftBlock {
 
   constructor (public type: number, public biomeId: number, public metadata: number) {
     this.b = mcData[this.type]
-    if ('variations' in this.b)
+    if (this.b.variations)
       for (let variation of this.b.variations)
         if (variation.metadata === metadata)
           this.displayName = variation.displayName
