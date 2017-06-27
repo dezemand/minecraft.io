@@ -38,13 +38,13 @@ export default class MinecraftClient extends EventEmitter {
 
   private others = this.server.clients.others(this)
   private all = this.server.clients.all
-  public id: string = this.rawClient.id
+  public id: number = this.rawClient.id
   readonly userName: string = this.rawClient.username
   public displayName = {text: this.rawClient.username}
   readonly uuid: string = this.rawClient.uuid
   private _world: MinecraftWorld
 
-  private clientEvents (): void {
+  private listen (): void {
     this.rawClient.on('end', this.disconnect.bind(this))
     this.rawClient.on('error', this.error.bind(this))
     this.rawClient.on('chat', this.receiveChat.bind(this))
@@ -61,7 +61,7 @@ export default class MinecraftClient extends EventEmitter {
     if (this.inited)
       throw new Error('Cannot init twice')
     this.inited = true
-    this.clientEvents()
+    this.listen()
     this.server.clients.addClient(this)
     this.send('login', {
       entityId: this.id,
@@ -135,8 +135,6 @@ export default class MinecraftClient extends EventEmitter {
     this.pos.y = data.y
     this.pos.z = data.z
     this.onGround = data.onGround
-    this.entity.updatePos(this.pos)
-    // this.sendMessage({text: 'updatePos ' + JSON.stringify(data)})
   }
 
   private updateLook (data): void {
@@ -150,8 +148,6 @@ export default class MinecraftClient extends EventEmitter {
     this.look.yaw = data.yaw
     this.onGround = data.onGround
     this.fixYaw()
-    this.entity.updateLook(this.look)
-    // this.sendMessage({text: 'updateLook ' + JSON.stringify(data)})
   }
 
   private fixYaw (): void {
@@ -321,6 +317,7 @@ export default class MinecraftClient extends EventEmitter {
     if (kick)
       this.kick(kick)
     this.server.clients.del(this)
+    this.server.updatePlayerCount()
     debug.log(`Client ${this.id} destroyed`)
   }
 

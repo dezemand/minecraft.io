@@ -99,3 +99,28 @@ export interface SetCreativeSlotData {
   slot: number,
   item: SlotData
 }
+
+export interface EntityMovement {
+  entityId: number,
+  dX?: number,
+  dY?: number,
+  dZ?: number,
+  yaw?: number,
+  pitch?: number,
+  onGround?: boolean
+}
+
+export interface SpawnPacket {
+  entityId: number,
+  x: number,
+  y: number,
+  z: number,
+  yaw: number,
+  pitch: number
+}
+
+export interface SpawnPlayerPacket extends SpawnPacket {
+  playerUUID: string,
+  currentItem: number,
+  metadata: any
+}

@@ -1,35 +1,38 @@
 "use strict"
 import Events from '../../EventEmitter'
-import MinecraftClient from '../Client'
 import MinecraftServer from '../Server'
 import MinecraftWorld from '../World/World'
-import {Look, Position} from '../../Interfaces'
+import {Look, Position, SpawnPacket} from '../../Interfaces'
 
 export default class MinecraftEntity extends Events {
   protected inited: boolean = false
-  public clientsInRange: Array<MinecraftClient> = []
   readonly startTime = new Date()
   protected isVisible: boolean = true
   private _world: MinecraftWorld
 
-  constructor (public server: MinecraftServer, public id: string, public type, world: MinecraftWorld, public pos: Position, public look: Look, public onGround: boolean = false) {
+  constructor (readonly server: MinecraftServer,
+               readonly id: number,
+               readonly type,
+               world: MinecraftWorld,
+               public pos: Position,
+               public look: Look,
+               public onGround: boolean = false) {
     super()
-    this.server.clients.inRange(pos, 10 * 16, cl => this.clientsInRange.push(cl))
     this.server.entities.addEntity(this)
     this._world = world
   }
 
-  init() {
+  public init (): void {
     if(this.inited)
       throw new Error('Cannot init MinecraftEntity twice')
     this.inited = true
   }
 
-  tick() {
+  public tick (): void {
 
   }
 
-  get spawnPacketName (): string {
+  public get spawnPacketName (): string {
     switch (this.type) {
       case 'player':
         return 'named_entity_spawn'
@@ -40,7 +43,7 @@ export default class MinecraftEntity extends Events {
     }
   }
 
-  get spawnPacket (): any {
+  public get spawnPacket (): SpawnPacket {
     return {
       entityId: this.id,
       x: this.pos.x,
@@ -49,14 +52,6 @@ export default class MinecraftEntity extends Events {
       yaw: this.look.yaw,
       pitch: this.look.pitch
     }
-  }
-
-  spawn () {
-
-  }
-
-  destroy () {
-
   }
 
   public set world (world: MinecraftWorld) {

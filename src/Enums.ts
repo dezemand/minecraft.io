@@ -64,3 +64,10 @@ export enum WindowClickMode {
   Dragging,
   DoubleClick
 }
+
+export enum EntityMovementType {
+  Position,
+  Look,
+  Both,
+  Nothing
+}
