@@ -20,10 +20,14 @@ export default class MinecraftEntityLiving extends MinecraftEntity {
   private lastPos: Position = JSON.parse(JSON.stringify(this.pos))
   private updatedPos: boolean = true
   private updatedLook: boolean = true
-  public ignoringClients: Set<MinecraftClient> = new Set()
+  private ignoringClients: Set<MinecraftClient> = new Set()
 
   public init (): void {
     super.init()
+  }
+
+  public ignore (client: MinecraftClient): void {
+    this.ignoringClients.add(client)
   }
 
   protected updatePos (pos: Position): void {

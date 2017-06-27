@@ -12,6 +12,7 @@ import {WorldOptions} from '../Interfaces'
 import {Event} from '../Enums'
 import MinecraftFileSystem from './FileSystem'
 import * as path from 'path'
+import MinecraftItemStack from './Item/ItemStack'
 
 const debug: Debug = new Debug('MinecraftServer')
 
@@ -65,6 +66,8 @@ export default class MinecraftServer extends Events {
         client.sendMessage({text: 'Latency: ' + client.latency + 'ms'})
       else if (cmd.name === 'heal')
         client.updateHealth(20, 20)
+      else if (cmd.name === '1')
+        client.inventory.updateSlot(36, new MinecraftItemStack(1, 64))
       else
         client.sendMessage({text: 'Command not found', italic: true, color: 'gray'})
     })
@@ -97,15 +100,15 @@ export default class MinecraftServer extends Events {
     client.init()
   }
 
-  get maxPlayers (): number {
+  public get maxPlayers (): number {
     return this.server.maxPlayers
   }
 
-  updatePlayerCount (): void {
+  public updatePlayerCount (): void {
     this.server.playerCount = this.clients.size
   }
 
-  tick (): void {
+  private tick (): void {
     this.clients.all(client => client.tick())
     this.entities.all(entity => entity.tick())
   }

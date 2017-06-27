@@ -7,7 +7,7 @@ import {SpawnPlayerPacket} from '../../Interfaces'
 export default class MinecraftEntityPlayer extends MinecraftEntityLiving {
   constructor (public client: MinecraftClient) {
     super(client.server, client.id, 'player', client.world, client.pos, client.look, client.onGround)
-    super.ignoringClients.add(this.client)
+    super.ignore(this.client)
   }
 
   public init (): void {
@@ -21,12 +21,11 @@ export default class MinecraftEntityPlayer extends MinecraftEntityLiving {
   }
 
   public get spawnPacket (): SpawnPlayerPacket {
-    return {
-      ...super.spawnPacket,
+    return Object.assign(super.spawnPacket, {
       playerUUID: this.client.uuid,
       currentItem: 0,
       metadata: []
-    }
+    })
   }
 
   public tick (): void {
