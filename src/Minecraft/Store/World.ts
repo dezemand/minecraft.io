@@ -3,7 +3,7 @@ import MinecraftStore from './Store'
 import MinecraftWorld from '../World/World'
 
 export default class MinecraftWorldStore extends MinecraftStore {
-  addWorld (world: MinecraftWorld, isDefault: boolean = false): boolean {
+  public addWorld (world: MinecraftWorld, isDefault: boolean = false): boolean {
     world.setStore(this, this.worldId)
     if (!this.add(world.id, world))
       return false

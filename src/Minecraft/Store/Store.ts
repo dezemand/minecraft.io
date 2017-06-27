@@ -2,10 +2,10 @@
 import {Event} from '../../Enums'
 
 export default class MinecraftStore {
-  stored: Map<number | string, any> = new Map()
-  events: Map<Event, Set<any>> = new Map()
+  protected stored: Map<number | string, any> = new Map()
+  protected events: Map<Event, Set<any>> = new Map()
 
-  add (id: number | string, item: any): boolean {
+  protected add (id: number | string, item: any): boolean {
     if(this.stored.has(id))
       return false
     this.stored.set(id, item)
@@ -17,24 +17,24 @@ export default class MinecraftStore {
     return true
   }
 
-  get array(): Array<any> {
+  public get array (): Array<any> {
     const arr: Array<any> = []
     for(let obj of this.stored.values())
       arr.push(obj)
     return arr
   }
 
-  get size(): number {
+  public get size (): number {
     return this.stored.size
   }
 
-  on (event: Event, callback: any) {
+  public on (event: Event, callback: any): void {
     if(!this.events.has(event))
       this.events.set(event, new Set())
     this.events.get(event).add(callback)
   }
 
-  all(callback: any) {
+  public all (callback: any): void {
     if(!this.stored)
       return
     for(let item of this.stored.values())
