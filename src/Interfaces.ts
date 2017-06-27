@@ -90,7 +90,12 @@ export interface WindowClickData {
   windowId: number,
   slot: number,
   mouseButton: MouseButton | HotbarButton,
-  action: WindowClickMode,
-  mode: number,
+  action: number,
+  mode: WindowClickMode,
+  item: SlotData
+}
+
+export interface SetCreativeSlotData {
+  slot: number,
   item: SlotData
 }

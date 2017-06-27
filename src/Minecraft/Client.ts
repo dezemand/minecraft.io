@@ -11,9 +11,7 @@ import {Event} from '../Enums'
 import MinecraftChunk from './World/Chunk'
 import * as SpiralLoop from 'spiralloop'
 import MinecraftWorldInteractor from './World/Interactor'
-import MinecraftItemStack from './Item/ItemStack'
 import MinecraftInventoryPlayer from './Inventory/Player'
-import MinecraftItem from './Item/Item'
 import MinecraftInventory from './Inventory/Inventory'
 
 const debug: Debug = new Debug('MinecraftClient')
@@ -373,9 +371,6 @@ export default class MinecraftClient extends EventEmitter {
   // TODO: Create inventory loader using MinecraftFileSystem
   public loadInventory (): MinecraftInventory {
     const inventory: MinecraftInventory = new MinecraftInventory()
-    inventory.setSlot(0, new MinecraftItemStack(new MinecraftItem(57), 64))
-    for (let i = 1; i < 37; i++)
-      inventory.setSlot(i, new MinecraftItemStack(new MinecraftItem(i), i))
     return inventory
   }
 }
